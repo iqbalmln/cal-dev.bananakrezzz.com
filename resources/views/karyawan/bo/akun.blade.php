@@ -12,7 +12,7 @@
                     <ol class="breadcrumb bg-transparent mb-0 pb-0 pt-1 px-0 me-sm-6 me-5">
                         <li class="breadcrumb-item text-sm text-white active" aria-current="page">Apliaksi Kalkulator
                             Crew Banana Krezzz</li>
-                        <li class="breadcrumb-item text-sm text-white">Back Office | {{ Auth::user()->nama }}</li>
+                        <li class="breadcrumb-item text-sm text-white">Back Office | {{ Auth::user()->nama }} | Cabang {{ Auth::user()->cabang->nama }}</li>
                     </ol>
                     <h6 class="font-weight-bolder text-white mb-0">Akun</h6>
                 </nav>
@@ -40,6 +40,7 @@
                                     <tr>
                                         <th scope="col">Nama</th>
                                         <th scope="col">Role</th>
+                                        <th scope="col">Cabang</th>
                                         <th scope="col">Hapus</th>
                                     </tr>
                                 </thead>
@@ -56,6 +57,7 @@
                                                     Kasir
                                                 @endif
                                             </td>
+                                            <th scope="row">{{ $user->cabang->nama }}</th>
                                             <td>
 
                                                 <a href="/del.user?id={{ $user->id }}" class="btn btn-danger"><i
@@ -103,6 +105,20 @@
                                 <option value="fo" {{ old('role') == 'fo' ? 'selected' : '' }}>Front Office</option>
                                 <option value="kasir" {{ old('role') == 'kasir' ? 'selected' : '' }}>Kasir</option>
                                 <option value="bo" {{ old('role') == 'bo' ? 'selected' : '' }}>Back Office</option>
+                            </select>
+                            <!-- Tampilkan pesan error untuk field role -->
+                            @error('role')
+                                <small class="text-danger">{{ $message }}</small>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label for="role">Cabang</label>
+                            <select class="form-select" name="cabang_id" required>
+                                <option selected disabled>Pilih Cabang</option>
+                                @foreach ($cabang as $value_cabang)
+                                <option value="{{ $value_cabang->id }}" {{ old('cabang_id') == $value_cabang->id ? 'selected' : '' }}>{{ $value_cabang->nama }}</option>
+                                @endforeach
                             </select>
                             <!-- Tampilkan pesan error untuk field role -->
                             @error('role')

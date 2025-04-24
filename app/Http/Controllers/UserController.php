@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Cabang;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -89,9 +90,10 @@ class UserController extends Controller
 
     public function akun()
     {
-        $users = User::orderBy('created_at', 'desc')->get();
+        $users = User::orderBy('created_at', 'desc')->with('cabang')->get();
+        $cabang = Cabang::all();
 
-        return view('karyawan.bo.akun', compact('users'));
+        return view('karyawan.bo.akun', compact('users','cabang'));
     }
 
     public function store(Request $request)
@@ -100,6 +102,7 @@ class UserController extends Controller
         $request->validate([
             'nama' => 'required|string|max:255',
             'role' => 'required|in:fo,kasir,bo',
+            'cabang_id' => 'required',
             'pin' => 'required|numeric|digits:4|unique:users,pin', // Pastikan PIN unik
         ], [
             'pin.unique' => 'PIN ini sudah digunakan. Harap pilih PIN lain.',
@@ -109,6 +112,7 @@ class UserController extends Controller
         $user = new User();
         $user->nama = $request->nama;
         $user->role = $request->role;
+        $user->cabang_id = $request->cabang_id;
         $user->pin = $request->pin; // Simpan PIN (lebih baik di-hash jika ini adalah informasi sensitif)
 
         $user->save();
