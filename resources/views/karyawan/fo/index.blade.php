@@ -8,7 +8,7 @@
         <main class="main-content position-relative border-radius-lg ">
             <!-- Navbar -->
             <nav class="col-lg-12 text-center">
-                <h6 class="font-weight-bolder text-white mb-0">Front Office | {{ Auth::user()->nama }}<br> Input Data
+                <h6 class="font-weight-bolder text-white mb-0">Front Office | {{ Auth::user()->nama }} | Cabang {{ Auth::user()->cabang->nama }}<br> Input Data
                     Rombongan</h6>
             </nav>
             <!-- End Navbar -->
