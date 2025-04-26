@@ -10,7 +10,7 @@
         <main class="main-content position-relative border-radius-lg ">
             <!-- Navbar -->
             <nav class="col-lg-12 text-center">
-                <h6 class="font-weight-bolder text-white mb-0">Kasir | {{ Auth::user()->nama }} | Cabang {{ Auth::user()->cabang->nama }}<br> Input invoice
+                <h6 class="font-weight-bolder text-white mb-0">Kasir | {{ Auth::user()->nama }} | Cabang {{ Auth::user()->cabang ? Auth::user()->cabang->nama : 'Dihapus' }}<br> Input invoice
                     Rombongan
                 </h6>
             </nav>
