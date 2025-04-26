@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\RombonganController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\CabangController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -33,6 +34,9 @@ Route::get('/update_status_transaksi', [RombonganController::class, 'update_stat
 Route::get('/akun', [UserController::class, 'akun'])->middleware('auth'); 
 Route::post('/add.user', [UserController::class, 'store']);
 Route::get('/del.user', [UserController::class, 'destroy']);
+Route::get('/cabang', [CabangController::class, 'cabang'])->middleware('auth'); 
+Route::post('/add.cabang', [CabangController::class, 'store']);
+Route::get('/del.cabang', [CabangController::class, 'destroy']);
 
 
 //Fatch

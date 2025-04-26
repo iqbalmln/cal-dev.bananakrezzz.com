@@ -14,7 +14,7 @@
                             Crew Banana Krezzz</li>
                         <li class="breadcrumb-item text-sm text-white">Back Office | {{ Auth::user()->nama }} | Cabang {{ Auth::user()->cabang->nama }}</li>
                     </ol>
-                    <h6 class="font-weight-bolder text-white mb-0">Akun</h6>
+                    <h6 class="font-weight-bolder text-white mb-0">Cabang</h6>
                 </nav>
 
             </div>
@@ -26,41 +26,31 @@
 
                     <!-- Button trigger modal -->
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal">
-                        Tambah Akun
+                        Tambah Cabang
                     </button>
                     <div class="card ">
                         <div class="card-header pb-0 p-3">
                             <div class="d-flex justify-content-between">
-                                <h6 class="mb-2">Data Rombongan Hari Ini</h6>
+                                <h6 class="mb-2">Data Cabang</h6>
                             </div>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-striped">
                                 <thead>
                                     <tr>
+                                        <th scope="col">No</th>
                                         <th scope="col">Nama</th>
-                                        <th scope="col">Role</th>
-                                        <th scope="col">Cabang</th>
                                         <th scope="col">Hapus</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($users as $user)
+                                    @foreach ($cabang as $key => $user)
                                         <tr>
+                                            <th scope="row">{{ $key+1 }}</th>
                                             <th scope="row">{{ $user->nama }}</th>
                                             <td>
-                                                @if ($user->role == 'fo')
-                                                    Front Office
-                                                @elseif($user->role == 'bo')
-                                                    Back Office
-                                                @elseif($user->role == 'kasir')
-                                                    Kasir
-                                                @endif
-                                            </td>
-                                            <th scope="row">{{ $user->cabang ? $user->cabang->nama : '-' }}</th>
-                                            <td>
 
-                                                <a href="/del.user?id={{ $user->id }}" class="btn btn-danger"><i
+                                                <a href="/del.cabang?id={{ $user->id }}" class="btn btn-danger"><i
                                                         class="bi bi-trash3-fill"></i></a>
                                             </td>
                                         </tr>
@@ -83,9 +73,9 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Tambah Akun</h5>
+                    <h5 class="modal-title" id="exampleModalLabel">Tambah Cabang</h5>
                 </div>
-                <form action="/add.user" method="POST">
+                <form action="/add.cabang" method="POST">
                     @csrf
                     <div class="modal-body">
                         <div class="form-group">
@@ -94,44 +84,6 @@
                                 required>
                             <!-- Tampilkan pesan error untuk field nama -->
                             @error('nama')
-                                <small class="text-danger">{{ $message }}</small>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <label for="role">Role</label>
-                            <select class="form-select" name="role" required>
-                                <option selected disabled>Pilih Role</option>
-                                <option value="fo" {{ old('role') == 'fo' ? 'selected' : '' }}>Front Office</option>
-                                <option value="kasir" {{ old('role') == 'kasir' ? 'selected' : '' }}>Kasir</option>
-                                <option value="bo" {{ old('role') == 'bo' ? 'selected' : '' }}>Back Office</option>
-                            </select>
-                            <!-- Tampilkan pesan error untuk field role -->
-                            @error('role')
-                                <small class="text-danger">{{ $message }}</small>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <label for="role">Cabang</label>
-                            <select class="form-select" name="cabang_id" required>
-                                <option selected disabled>Pilih Cabang</option>
-                                @foreach ($cabang as $value_cabang)
-                                <option value="{{ $value_cabang->id }}" {{ old('cabang_id') == $value_cabang->id ? 'selected' : '' }}>{{ $value_cabang->nama }}</option>
-                                @endforeach
-                            </select>
-                            <!-- Tampilkan pesan error untuk field role -->
-                            @error('role')
-                                <small class="text-danger">{{ $message }}</small>
-                            @enderror
-                        </div>
-
-                        <div class="form-group">
-                            <label for="pin">Pin</label>
-                            <input type="number" class="form-control" name="pin" value="{{ old('pin') }}"
-                                required>
-                            <!-- Tampilkan pesan error untuk field pin -->
-                            @error('pin')
                                 <small class="text-danger">{{ $message }}</small>
                             @enderror
                         </div>
