@@ -12,6 +12,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Request as FacadesRequest;
+use App\Exports\DataExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class RombonganController extends Controller
 {
@@ -195,7 +197,8 @@ public function deleteAll()
             return [
                 'user' => $rows->first()->user,
                 'belanja' => $rows->pluck('belanja'),
-                'total' => $rows->sum('belanja')
+                'total' => $rows->sum('belanja'),
+                'rombongan' => $rows->first()->rombongan
             ];
         });
 
@@ -216,11 +219,16 @@ public function deleteAll()
         $rombongan->waktu_pulang = now()->format('H:i');
         $rombongan->status = 'selesai';
         $rombongan->total_belanja = $request->total;
+        $rombongan->total_belanja2 = $request->total_belanja2;
 
         // Save the updated record
         $rombongan->save();
 
         // Optionally, return a response or redirect
         return redirect()->back()->with('success', 'Transaksi selesai dan status berhasil diupdate.');
+    }
+
+    public function export_excel(){
+        return Excel::download(new DataExport(), 'Data Export Rombongan '.date('d-m-Y').'.xlsx');
     }
 }

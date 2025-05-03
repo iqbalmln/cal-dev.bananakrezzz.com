@@ -14,6 +14,11 @@ class Invoice extends Model
     // Di model Invoice.php
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id')->with('cabang');
+    }
+
+    public function rombongan()
+    {
+        return $this->belongsTo(Rombongan::class);
     }
 }

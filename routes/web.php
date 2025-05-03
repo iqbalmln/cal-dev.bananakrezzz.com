@@ -22,16 +22,19 @@ Route::get('/update.database', [RombonganController::class, 'deleteAll'])->middl
 
 //KASIR
 Route::get('/kasir', [RombonganController::class, 'kasir'])->middleware('auth')->name('kasir');
+Route::get('/master', [UserController::class, 'master'])->middleware('auth')->name('master');
 Route::get('/cal', [RombonganController::class, 'cal'])->middleware('auth');
 Route::post('/tambah-invoice', [RombonganController::class, 'tambahInvoice'])->name('tambah.invoice');
 
 //BO
 Route::get('/backoffice', [RombonganController::class, 'bo'])->middleware('auth')->name('bo');
+Route::get('/export-excel', [RombonganController::class, 'export_excel'])->middleware('auth')->name('export_excel');
 Route::get('/detail_transaksi', [RombonganController::class, 'detail_transaksi'])->middleware('auth');
 Route::get('/update_status_transaksi', [RombonganController::class, 'update_status_transaksi'])->middleware('auth');
 
 //akun
 Route::get('/akun', [UserController::class, 'akun'])->middleware('auth'); 
+Route::get('/akun-master', [UserController::class, 'akun_master'])->middleware('auth'); 
 Route::post('/add.user', [UserController::class, 'store']);
 Route::get('/del.user', [UserController::class, 'destroy']);
 Route::get('/cabang', [CabangController::class, 'cabang'])->middleware('auth'); 

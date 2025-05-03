@@ -25,6 +25,11 @@ class DatabaseSeeder extends Seeder
         ]);
         
         User::create([
+            'nama' => 'Master Utama',
+            'role' => 'master',
+            'pin' => 1000,
+        ]);
+        User::create([
             'nama' => 'Adam FO',
             'role' => 'fo',
             'pin' => 11,

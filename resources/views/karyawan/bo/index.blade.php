@@ -102,6 +102,7 @@
             <div class="card-header pb-0 p-3">
               <div class="d-flex justify-content-between">
                 <h6 class="mb-2">Data Rombongan Hari Ini</h6>
+                <a href="/export-excel" class="btn  btn-success">Export Data</a>
               </div>
             </div>
             <div class="table-responsive">
@@ -152,7 +153,7 @@
                                   tableContent += '</td>';
           
                                   // Total Belanja (dengan kelas harga)
-                                  tableContent += '<td >' + (item.total_belanja ? item.total_belanja : '-') + '</td>';
+                                  tableContent += '<td >' + (item.total_belanja ? item.total_belanja+' ('+item.total_belanja2+')' : '-') + '</td>';
           
                                   // Kode
                                   tableContent += '<td>' + item.kode + '</td>';

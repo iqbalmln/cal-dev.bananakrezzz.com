@@ -14,7 +14,7 @@ class CabangController extends Controller
     {
         $cabang = Cabang::orderBy('created_at', 'desc')->get();
 
-        return view('karyawan.bo.cabang',compact('cabang'));
+        return view('karyawan.master.cabang',compact('cabang'));
     }
 
     public function store(Request $request)

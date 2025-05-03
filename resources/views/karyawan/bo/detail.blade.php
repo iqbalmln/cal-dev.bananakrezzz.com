@@ -55,6 +55,7 @@
                                     <form method="GET" action="/update_status_transaksi">
                                       <input type="hidden" value="" name="total" id="total-belanja">
                                       <input type="hidden" value="{{ $rombongan->id }}" name="rombongan_id">
+                                      <input type="hidden" value="" name="total_belanja2">
                                       <button type="submit" href="/transaksi_selesai?id={{ $rombongan->id }}"
                                         class="btn btn-primary btn-lg btn-block"><i
                                             class="bi bi-lock-fill"></i>Selesaikan Transaksi</button> <br>
@@ -76,7 +77,7 @@
 
             <div class="row mt-4">
                 <div class="col-lg-12 mb-lg-0 mb-4">
-                    <div class="card ">
+                    <div class="card p-3">
                         <div class="card-header pb-0 p-3">
                             <div class="d-flex justify-content-between">
                                 <h6 class="mb-2">Data Rombongan Hari Ini</h6>
@@ -97,6 +98,8 @@
                             </table>
                         </div>
                         <h1 id="total-amount" class="h3 btn btn-success btn-lg btn-block"></h1>
+                        <p>Masukkan Biaya Dibulatkan (angka)</p>
+                        <input type="text" id="total-amount2" class="form-control w-100">
 
                         <script>
                             jQuery(document).ready(function($) {
@@ -114,6 +117,7 @@
                                         success: function(response) {
                                             var tableContent = '';
                                             var grandTotal = 0;
+                                            let userDataTotal_belanja2 = 0
 
                                             // Loop through each user's invoice data
                                             $.each(response.userTotals, function(userId, userData) {
@@ -122,6 +126,7 @@
                                                 var belanjaItems = '';
 
                                                 // Loop through the 'belanja' items for each user
+                                                userDataTotal_belanja2 = userData.rombongan.total_belanja2
                                               $.each(userData.belanja, function(index, belanja) {
     // Pastikan belanja adalah angka
     belanja = parseInt(belanja, 10) || 0;  // Jika tidak bisa dikonversi, jadikan 0
@@ -151,6 +156,15 @@
                                             $('#invoice-table').html(tableContent);
                                             $('#total-amount').text('Total: ' + grandTotal.toLocaleString('id-ID'));
                                             $('#total-belanja').val(grandTotal.toLocaleString('id-ID'));
+                                            console.log(userDataTotal_belanja2)
+                                            if (userDataTotal_belanja2 != 0) {
+                                                $('#total-amount2').val(userDataTotal_belanja2);
+                                                $('[name=total_belanja2]').val(userDataTotal_belanja2);
+                                            }
+                                            if ($('#total-amount2').val() == 0) {
+                                                $('#total-amount2').val(grandTotal.toLocaleString('id-ID'));
+                                                $('[name=total_belanja2]').val(grandTotal.toLocaleString('id-ID'));
+                                            }
 
                                         },
                                         error: function(xhr, status, error) {
@@ -162,6 +176,10 @@
                                 // Initial fetch of data and set interval to update every 5 seconds
                                 fetchInvoiceData();
                                 setInterval(fetchInvoiceData, 5000);
+                            });
+
+                            $('#total-amount2').keyup(function(){
+                                $("[name=total_belanja2]").val($(this).val().toLocaleString('id-ID'))
                             });
                         </script>
 

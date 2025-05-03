@@ -10,4 +10,9 @@ class Rombongan extends Model
     use HasFactory;
 
     protected $guarded = [];
+
+    public function invoice()
+    {
+        return $this->hasOne(Invoice::class)->with('user');
+    }
 }

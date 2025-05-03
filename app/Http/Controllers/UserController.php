@@ -27,6 +27,8 @@ class UserController extends Controller
                 return redirect()->route('bo');
             } elseif ($user->role == 'kasir') {
                 return redirect()->route('kasir');
+            } elseif ($user->role == 'master') {
+                return redirect()->route('master');
             }
         }
 
@@ -58,6 +60,8 @@ class UserController extends Controller
                 return redirect()->route('bo');
             } elseif ($user->role == 'kasir') {
                 return redirect()->route('kasir');
+            } elseif ($user->role == 'master') {
+                return redirect()->route('master');
             }
         }
 
@@ -90,10 +94,26 @@ class UserController extends Controller
 
     public function akun()
     {
-        $users = User::orderBy('created_at', 'desc')->with('cabang')->get();
+        $users = User::orderBy('created_at', 'desc')->with('cabang')->where('role','!=','master')->get();
         $cabang = Cabang::all();
 
         return view('karyawan.bo.akun', compact('users','cabang'));
+    }
+
+    public function akun_master()
+    {
+        $users = User::orderBy('created_at', 'desc')->with('cabang')->get();
+        $cabang = Cabang::all();
+
+        return view('karyawan.master.akun', compact('users','cabang'));
+    }
+
+    public function master()
+    {
+        $users = User::orderBy('created_at', 'desc')->with('cabang')->get();
+        $cabang = Cabang::all();
+
+        return view('karyawan.master.akun', compact('users','cabang'));
     }
 
     public function store(Request $request)
@@ -102,7 +122,6 @@ class UserController extends Controller
         $request->validate([
             'nama' => 'required|string|max:255',
             'role' => 'required|in:fo,kasir,bo',
-            'cabang_id' => 'required',
             'pin' => 'required|numeric|digits:4|unique:users,pin', // Pastikan PIN unik
         ], [
             'pin.unique' => 'PIN ini sudah digunakan. Harap pilih PIN lain.',

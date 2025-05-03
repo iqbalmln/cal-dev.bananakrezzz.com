@@ -19,6 +19,7 @@ return new class extends Migration
             $table->integer('kode')->nullable();
             $table->string('status')->nullable();
             $table->text('total_belanja')->nullable();
+            $table->text('total_belanja2')->nullable();
             $table->timestamps();
         });
     }
