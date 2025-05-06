@@ -156,12 +156,11 @@
                                             $('#invoice-table').html(tableContent);
                                             $('#total-amount').text('Total: ' + grandTotal.toLocaleString('id-ID'));
                                             $('#total-belanja').val(grandTotal.toLocaleString('id-ID'));
-                                            console.log(userDataTotal_belanja2)
-                                            if (userDataTotal_belanja2 != 0) {
+                                            if (userDataTotal_belanja2 != null) {
                                                 $('#total-amount2').val(userDataTotal_belanja2);
                                                 $('[name=total_belanja2]').val(userDataTotal_belanja2);
                                             }
-                                            if ($('#total-amount2').val() == 0) {
+                                            if ($('#total-amount2').val() == 0 && userDataTotal_belanja2 == null) {
                                                 $('#total-amount2').val(grandTotal.toLocaleString('id-ID'));
                                                 $('[name=total_belanja2]').val(grandTotal.toLocaleString('id-ID'));
                                             }
