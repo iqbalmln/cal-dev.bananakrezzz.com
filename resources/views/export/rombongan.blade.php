@@ -16,22 +16,31 @@
 	</tr>
 	@foreach($data as $value)
 	<?php  
+		// 1. Bigbus 100000
+		// 2. Medium 80000
+		// 3. Travel 50000
 		preg_match_all('/(\d+)([BMT])/', $value->nama, $matches, PREG_SET_ORDER);
 		$b = 0;
 		$m = 0;
 		$t = 0;
+		$wellcome = 0;
+		$fee = str_replace('.','',$value->total_belanja2) - str_replace('.','',$value->total_belanja);
 		foreach ($matches as $match) {
 	        $value_car = (int)$match[1];
 	        $type = $match[2];
 
 	        if ($type === 'B') {
 	            $b = $value_car;
+	            $wellcome += $value_car*100000;
 	        } elseif ($type === 'M') {
 	            $m = $value_car;
+	            $wellcome += $value_car*80000;
 	        } elseif ($type === 'T') {
 	            $t = $value_car;
+	            $wellcome += $value_car*50000;
 	        }
 	    }
+
 	?>
 	<tr>
 		<td>{{ $value->created_at }}</td>
@@ -41,10 +50,10 @@
 		<td>{{ $b }}</td>
 		<td>{{ $m }}</td>
 		<td>{{ $t }}</td>
-		<td></td>
-		<td>{{ $value->total_belanja }}</td>
-		<td>{{ $value->total_belanja2 }}</td>
-		<td></td>
+		<td>{{ $wellcome }}</td>
+		<td>{{ str_replace('.','',$value->total_belanja) }}</td>
+		<td>{{ str_replace('.','',$value->total_belanja2) }}</td>
+		<td>{{ $fee }}</td>
 		<td></td>
 		<td></td>
 	</tr>
