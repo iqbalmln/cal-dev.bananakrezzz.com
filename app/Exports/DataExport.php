@@ -14,7 +14,7 @@ class DataExport implements FromView
 
     public function view(): View
     {
-        $query = Rombongan::with('invoice')->get();
+        $query = Rombongan::with('invoice')->where('status','selesai')->get();
         return view('export.rombongan', [
             'data' => $query
         ]);
