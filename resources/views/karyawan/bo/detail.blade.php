@@ -99,9 +99,9 @@
                             </table>
                         </div>
                         <h1 id="total-amount" class="h3 btn btn-success btn-lg btn-block"></h1>
-                        <p>Masukkan Biaya Dibulatkan (angka)</p>
+                        <p class="m-0 mt-2">Masukkan Biaya Dibulatkan (angka)</p>
                         <input type="text" id="total-amount2" class="form-control w-100">
-                        <p>Fee</p>
+                        <p class="m-0 mt-2">Fee</p>
                         <input type="text" id="total-fee" class="form-control w-100">
 
                         <script>
