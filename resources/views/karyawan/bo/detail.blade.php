@@ -100,9 +100,9 @@
                         </div>
                         <h1 id="total-amount" class="h3 btn btn-success btn-lg btn-block"></h1>
                         <p class="m-0 mt-2">Masukkan Biaya Dibulatkan (angka)</p>
-                        <input type="text" id="total-amount2" class="form-control w-100">
+                        <input type="number" id="total-amount2" class="form-control w-100">
                         <p class="m-0 mt-2">Fee</p>
-                        <input type="text" id="total-fee" class="form-control w-100">
+                        <input type="text" id="total-fee" class="form-control w-100 bg-light" readonly>
 
                         <script>
                             jQuery(document).ready(function($) {
@@ -162,16 +162,18 @@
                                             $('#total-amount').text('Total: ' + grandTotal.toLocaleString('id-ID'));
                                             $('#total-belanja').val(grandTotal.toLocaleString('id-ID'));
                                             if (userDataTotal_belanja2 != null) {
-                                                $('#total-amount2').val(userDataTotal_belanja2);
+                                                $('#total-amount2').val(userDataTotal_belanja2.replace('.','').replace('.',''));
                                                 $('[name=total_belanja2]').val(userDataTotal_belanja2);
                                             }
                                             if (userDataTotal_fee != null) {
                                                 $('#total-fee').val(userDataTotal_fee);
                                             }
                                             if ($('#total-amount2').val() == 0 && userDataTotal_belanja2 == null) {
-                                                $('#total-amount2').val(grandTotal.toLocaleString('id-ID'));
+                                                $('#total-amount2').val(grandTotal.toLocaleString('id-ID').replace('.','').replace('.',''));
                                                 $('[name=total_belanja2]').val(grandTotal.toLocaleString('id-ID'));
                                             }
+                                            console.log(123)
+                                            $('#total-fee').val(0.20*$('#total-amount2').val()).change()
 
                                         },
                                         error: function(xhr, status, error) {
@@ -187,9 +189,10 @@
 
                             $('#total-amount2').keyup(function(){
                                 $("[name=total_belanja2]").val($(this).val().toLocaleString('id-ID'))
+                                $('#total-fee').val(0.20*$(this).val()).change()
                             });
 
-                            $('#total-fee').keyup(function(){
+                            $('#total-fee').change(function(){
                                 $("[name=total_fee]").val($(this).val().toLocaleString('id-ID'))
                             });
                         </script>
