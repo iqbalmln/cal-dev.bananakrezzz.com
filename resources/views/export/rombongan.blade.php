@@ -24,7 +24,6 @@
 		$m = 0;
 		$t = 0;
 		$wellcome = 0;
-		$fee = str_replace('.','',$value->total_belanja2) - str_replace('.','',$value->total_belanja);
 		foreach ($matches as $match) {
 	        $value_car = (int)$match[1];
 	        $type = $match[2];
@@ -53,7 +52,7 @@
 		<td>{{ $wellcome }}</td>
 		<td>{{ str_replace('.','',$value->total_belanja) }}</td>
 		<td>{{ str_replace('.','',$value->total_belanja2) }}</td>
-		<td>{{ $fee }}</td>
+		<td>{{ str_replace('.','',$value->fee) }}</td>
 		<td></td>
 		<td></td>
 	</tr>

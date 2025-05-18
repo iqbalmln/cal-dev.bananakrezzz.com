@@ -56,6 +56,7 @@
                                       <input type="hidden" value="" name="total" id="total-belanja">
                                       <input type="hidden" value="{{ $rombongan->id }}" name="rombongan_id">
                                       <input type="hidden" value="" name="total_belanja2">
+                                      <input type="hidden" value="" name="total_fee">
                                       <button type="submit" href="/transaksi_selesai?id={{ $rombongan->id }}"
                                         class="btn btn-primary btn-lg btn-block"><i
                                             class="bi bi-lock-fill"></i>Selesaikan Transaksi</button> <br>
@@ -100,6 +101,8 @@
                         <h1 id="total-amount" class="h3 btn btn-success btn-lg btn-block"></h1>
                         <p>Masukkan Biaya Dibulatkan (angka)</p>
                         <input type="text" id="total-amount2" class="form-control w-100">
+                        <p>Fee</p>
+                        <input type="text" id="total-fee" class="form-control w-100">
 
                         <script>
                             jQuery(document).ready(function($) {
@@ -118,6 +121,7 @@
                                             var tableContent = '';
                                             var grandTotal = 0;
                                             let userDataTotal_belanja2 = 0
+                                            let userDataTotal_fee = 0
 
                                             // Loop through each user's invoice data
                                             $.each(response.userTotals, function(userId, userData) {
@@ -127,15 +131,16 @@
 
                                                 // Loop through the 'belanja' items for each user
                                                 userDataTotal_belanja2 = userData.rombongan.total_belanja2
-                                              $.each(userData.belanja, function(index, belanja) {
-    // Pastikan belanja adalah angka
-    belanja = parseInt(belanja, 10) || 0;  // Jika tidak bisa dikonversi, jadikan 0
-    belanjaItems +=
-        '<span class="belanja-item" data-belanja="' +
-        belanja + '">' + belanja.toLocaleString('id-ID') +
-        ' + </span>';
-    totalBelanja += belanja;
-});
+                                                userDataTotal_fee = userData.rombongan.fee
+                                                $.each(userData.belanja, function(index, belanja) {
+                                                    // Pastikan belanja adalah angka
+                                                    belanja = parseInt(belanja, 10) || 0;  // Jika tidak bisa dikonversi, jadikan 0
+                                                    belanjaItems +=
+                                                        '<span class="belanja-item" data-belanja="' +
+                                                        belanja + '">' + belanja.toLocaleString('id-ID') +
+                                                        ' + </span>';
+                                                    totalBelanja += belanja;
+                                                });
 
 
                                                 // Append the row for this user
@@ -160,6 +165,9 @@
                                                 $('#total-amount2').val(userDataTotal_belanja2);
                                                 $('[name=total_belanja2]').val(userDataTotal_belanja2);
                                             }
+                                            if (userDataTotal_fee != null) {
+                                                $('#total-fee').val(userDataTotal_fee);
+                                            }
                                             if ($('#total-amount2').val() == 0 && userDataTotal_belanja2 == null) {
                                                 $('#total-amount2').val(grandTotal.toLocaleString('id-ID'));
                                                 $('[name=total_belanja2]').val(grandTotal.toLocaleString('id-ID'));
@@ -179,6 +187,10 @@
 
                             $('#total-amount2').keyup(function(){
                                 $("[name=total_belanja2]").val($(this).val().toLocaleString('id-ID'))
+                            });
+
+                            $('#total-fee').keyup(function(){
+                                $("[name=total_fee]").val($(this).val().toLocaleString('id-ID'))
                             });
                         </script>
 

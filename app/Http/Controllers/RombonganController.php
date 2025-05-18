@@ -220,6 +220,7 @@ public function deleteAll()
         $rombongan->status = 'selesai';
         $rombongan->total_belanja = $request->total;
         $rombongan->total_belanja2 = $request->total_belanja2;
+        $rombongan->fee = $request->total_fee;
 
         // Save the updated record
         $rombongan->save();
