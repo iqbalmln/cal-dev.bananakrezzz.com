@@ -19,10 +19,16 @@
 		// 1. Bigbus 100000
 		// 2. Medium 80000
 		// 3. Travel 50000
+
+		// jumlahKendaraan_namaKendaraan_namaBiro_asalKota
+		// 1B_Pesona_(Biro)_Jogja
+
 		preg_match_all('/(\d+)([BMT])/', $value->nama, $matches, PREG_SET_ORDER);
 		$b = 0;
 		$m = 0;
 		$t = 0;
+		$nama_kendaraan = explode('_', $value->nama)[1];
+		$biro = explode('_', $value->nama)[2];
 		$wellcome = 0;
 		foreach ($matches as $match) {
 	        $value_car = (int)$match[1];
@@ -44,8 +50,8 @@
 	<tr>
 		<td>{{ $value->created_at }}</td>
 		<td>{{ $value->invoice->user->cabang->nama }}</td>
-		<td></td>
-		<td></td>
+		<td>{{ $nama_kendaraan }}</td>
+		<td>{{ $biro }}</td>
 		<td>{{ $b }}</td>
 		<td>{{ $m }}</td>
 		<td>{{ $t }}</td>
