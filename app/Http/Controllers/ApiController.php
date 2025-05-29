@@ -12,7 +12,10 @@ class ApiController extends Controller
     public function rombongan($id)
     {
         $data = Rombongan::where('id', $id)->first();
-        echo json_encode($data);
+        return response()->json($data)
+            ->header('Access-Control-Allow-Origin', '*')
+            ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+            ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     }
 
     public function store(Request $request)
