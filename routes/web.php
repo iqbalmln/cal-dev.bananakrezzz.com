@@ -29,9 +29,10 @@ Route::post('/tambah-invoice', [RombonganController::class, 'tambahInvoice'])->n
 
 //BO
 Route::get('/backoffice', [RombonganController::class, 'bo'])->middleware('auth')->name('bo');
-Route::get('/export-excel', [RombonganController::class, 'export_excel'])->middleware('auth')->name('export_excel');
 Route::get('/detail_transaksi', [RombonganController::class, 'detail_transaksi'])->middleware('auth');
 Route::get('/update_status_transaksi', [RombonganController::class, 'update_status_transaksi'])->middleware('auth');
+Route::get('/export-excel', [RombonganController::class, 'export_excel'])->middleware('auth')->name('export_excel');
+Route::get('/sync-api', [RombonganController::class, 'sync_api'])->middleware('auth')->name('sync_api');
 
 //akun
 Route::get('/akun', [UserController::class, 'akun'])->middleware('auth'); 

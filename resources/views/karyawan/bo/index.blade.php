@@ -102,7 +102,10 @@
             <div class="card-header pb-0 p-3">
               <div class="d-flex justify-content-between">
                 <h6 class="mb-2">Data Rombongan Hari Ini</h6>
-                <a href="/export-excel" class="btn  btn-success">Export Data</a>
+                <div>
+                  <a href="/export-excel" class="btn  btn-success">Export Data</a>
+                  <a href="/sync-api" class="btn  btn-primary">Sinkronkan Data</a>
+                </div>
               </div>
             </div>
             <div class="table-responsive">

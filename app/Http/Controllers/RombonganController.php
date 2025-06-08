@@ -232,4 +232,40 @@ public function deleteAll()
     public function export_excel(){
         return Excel::download(new DataExport(), 'Data Export Rombongan '.date('d-m-Y').'.xlsx');
     }
+
+    public function sync_api(){
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+          CURLOPT_URL => 'https://api-open.olsera.co.id/api/open-api/v1/id/report/salesitemsbydate?per_page=100&from=2025-06-4&to=2025-06-4&page=2',
+          CURLOPT_RETURNTRANSFER => true,
+          CURLOPT_ENCODING => '',
+          CURLOPT_MAXREDIRS => 10,
+          CURLOPT_TIMEOUT => 0,
+          CURLOPT_FOLLOWLOCATION => true,
+          CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+          CURLOPT_CUSTOMREQUEST => 'GET',
+          CURLOPT_HTTPHEADER => array(
+            'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9hcGktb3Blbi5vbHNlcmEuY28uaWRcL2FwaVwvb3Blbi1hcGlcL3YxXC9pZFwvdG9rZW4iLCJpYXQiOjE3NDkzNjQ2NTgsImV4cCI6MTc0OTQ1MTA1OCwibmJmIjoxNzQ5MzY0NjU4LCJqdGkiOiI2ZmQzZjYxYTgwYWUyMTRiNTZkNWRjZWYxNWQyZTQ5ZDY3OGQyNjQ1NTRhMTY0YjU0YWVjZDZmNDg5NzU1NWI0NDg3MWZiYjg0NTk2ZTNkZjE3NDkzNjQ2NTgiLCJzdWIiOjI0MiwicHJ2IjoiNDI1YzY2MmRjMWU4MDlkM2UxOGNhNDU3NjFkMGY2MWQ4MGJmNmNlMyJ9.klOwVci782sBe7_-mPo-uhb40DA0Ud7tF_Gamq47i7Y'
+          ),
+        ));
+
+        $response = curl_exec($curl);
+
+        curl_close($curl);
+        dd($response);
+        $all = Rombongan::get();
+        foreach ($all as $value) {
+            if($value->nama == $response->customer_name){
+                Rombongan::create([
+                    'kode' => $response->customer_name,
+                    'nama' => 1,
+                    'status' => 'transaksi'
+                ]);
+            }
+        }
+
+        return redirect()->back()->with('success', 'Berhasil sinkronisasi data POS');
+
+    }
 }
