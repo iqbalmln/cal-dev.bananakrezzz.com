@@ -131,8 +131,8 @@
                 try {
                   const now = new Date();
                   {{-- const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10); --}}
-                  const startOfMonth = '2025-06-04';
-                  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+                  {{-- const startOfMonth = '2025-06-04'; --}}
+                  const today = new Date().toISOString().slice(0, 10);
 
                   let token = "";
                   let page = 1;
@@ -157,8 +157,8 @@
                       type: "get",
                       data: {
                         per_page: '100',
-                        from: startOfMonth,
-                        to: startOfMonth,
+                        from: today,
+                        to: today,
                         page: page
                       },
                       headers: {
