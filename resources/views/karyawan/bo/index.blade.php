@@ -104,7 +104,7 @@
                 <h6 class="mb-2">Data Rombongan Hari Ini</h6>
                 <div>
                   <a href="/export-excel" class="btn  btn-success">Export Data</a>
-                  <a href="/sync-api" class="btn  btn-primary">Sinkronkan Data</a>
+                  <button type="button" class="btn sync-api btn-primary">Sinkronkan Data</button>
                 </div>
               </div>
             </div>
@@ -125,6 +125,87 @@
             </table>
             
             <script>
+              $(".sync-api").click(async function () {
+                $(this).attr('disabled',true)
+                $(this).html('Loading...')
+                try {
+                  const now = new Date();
+                  {{-- const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10); --}}
+                  const startOfMonth = '2025-06-04';
+                  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+
+                  let token = "";
+                  let page = 1;
+                  let result_data = [];
+                  let result_data_send = [];
+
+                  // Dapatkan token
+                  const tokenResponse = await $.ajax({
+                    url: "https://api-open.olsera.co.id/api/open-api/v1/id/token",
+                    type: "post",
+                    data: {
+                      app_id: 'pjm6n8KIbywEf4jLRuRX',
+                      secret_key: 'otAW7uDlLFt1cvAgyzgsON6ifh31xXJw',
+                      grant_type: 'secret_key'
+                    }
+                  });
+                  token = tokenResponse.access_token;
+
+                  while (true) {
+                    const salesResponse = await $.ajax({
+                      url: "https://api-open.olsera.co.id/api/open-api/v1/id/report/salesitemsbydate",
+                      type: "get",
+                      data: {
+                        per_page: '100',
+                        from: startOfMonth,
+                        to: startOfMonth,
+                        page: page
+                      },
+                      headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "Authorization": `Bearer ${token}`
+                      }
+                    });
+
+                    if (salesResponse.data.length > 0) {
+                      result_data = result_data.concat(salesResponse.data);
+                      page++;
+                    } else {
+                      break;
+                    }
+                  }
+
+                  {{-- let result_data2 = encodeURIComponent(JSON.stringify(result_data)); --}}
+                  {{-- console.log(window.location.origin + '/sync-api?json-data=' + result_data2) --}}
+                  {{-- window.location.href = window.location.origin + '/sync-api?json-data=' + result_data2; --}}
+
+                  $.each(result_data,(i,val)=>{
+                    if (val.customer_name != null) {
+                      result_data_send.push({
+                        name : val.customer_name,
+                        price : val.profit,
+                        order_time : val.forder_date.split(' ')[1]
+                      })
+                    }
+                  })
+
+                  const finalResponse = await $.ajax({
+                    url: window.location.origin+'/'+'sync-api',
+                    type: "get",
+                    data: {
+                      result: result_data_send
+                    },
+                    success: function(res) {
+                      window.location.href = window.location.origin + '/sync-api-success';
+                    }
+                  });
+
+                } catch (error) {
+                  console.error("error:", error);
+                }
+              });
+
+
               jQuery(document).ready(function($) {
                   setInterval(function() {
                       jQuery.ajax({

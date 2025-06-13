@@ -33,6 +33,7 @@ Route::get('/detail_transaksi', [RombonganController::class, 'detail_transaksi']
 Route::get('/update_status_transaksi', [RombonganController::class, 'update_status_transaksi'])->middleware('auth');
 Route::get('/export-excel', [RombonganController::class, 'export_excel'])->middleware('auth')->name('export_excel');
 Route::get('/sync-api', [RombonganController::class, 'sync_api'])->middleware('auth')->name('sync_api');
+Route::get('/sync-api-success', [RombonganController::class, 'sync_api_success'])->middleware('auth')->name('sync_api');
 
 //akun
 Route::get('/akun', [UserController::class, 'akun'])->middleware('auth'); 
