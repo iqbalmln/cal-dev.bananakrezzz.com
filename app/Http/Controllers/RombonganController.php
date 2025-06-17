@@ -234,17 +234,34 @@ public function deleteAll()
     }
 
     public function sync_api(Request $request){
-        $all = Rombongan::get();
-
+        // dd($request);
+        if ($request->result == null) {
+            return response()->json(['status'=>'success'])
+                ->header('Access-Control-Allow-Origin', '*')
+                ->header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        }
+        
         foreach ($request->result as $value) {
+            $all = Rombongan::get();
             $exists = false;
 
             foreach ($all as $value2) {
+                $date1 = explode(' ',$value['order_date'])[0];
+                $date2 = explode(' ',$value2->created_at)[0];
+                // dd($value['name'] == $value2->nama && $date1 == $date2);
+                // echo $value2->created_at;
+
                 if (
                     $value['name'] == $value2->nama &&
-                    $value['price'] == $value2->total_belanja
+                    $date1 == $date2
                 ) {
                     $exists = true;
+                    $data_old = Rombongan::where('nama', $value['name'])->where('created_at', $value['order_date'])->first();
+                    $total_added = $data_old->total_belanja + $value['price'];
+                    Rombongan::where('nama', $value['name'])->update([
+                        'total_belanja' => $total_added,
+                    ]);
                     break;
                 }
             }
@@ -255,10 +272,13 @@ public function deleteAll()
                     'kode' => 1,
                     'total_belanja' => $value['price'],
                     'status' => 'transaksi',
-                    'waktu_datang' => $value['order_time']
+                    'waktu_datang' => $value['order_time'],
+                    'created_at' => $value['order_date']
                 ]);
             }
         }
+
+        // die;
 
 
         return response()->json(['status'=>'success'])

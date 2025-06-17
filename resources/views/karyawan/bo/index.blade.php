@@ -123,16 +123,15 @@
                     <!-- Data akan dimuat di sini oleh jQuery AJAX -->
                 </tbody>
             </table>
-            
+            <meta name="csrf-token" content="{{ csrf_token() }}">
             <script>
               $(".sync-api").click(async function () {
-                $(this).attr('disabled',true)
-                $(this).html('Loading...')
+                $(".sync-api").attr('disabled',true)
+                $(".sync-api").html('Loading...')
                 try {
                   const now = new Date();
-                  {{-- const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10); --}}
-                  {{-- const startOfMonth = '2025-06-04'; --}}
-                  const today = new Date().toISOString().slice(0, 10);
+                  const today = '2025-06-04';
+                  {{-- const today = new Date().toISOString().slice(0, 10); --}}
 
                   let token = "";
                   let page = 1;
@@ -152,56 +151,81 @@
                   token = tokenResponse.access_token;
 
                   while (true) {
-                    const salesResponse = await $.ajax({
-                      url: "https://api-open.olsera.co.id/api/open-api/v1/id/report/salesitemsbydate",
-                      type: "get",
-                      data: {
-                        per_page: '100',
-                        from: today,
-                        to: today,
-                        page: page
-                      },
-                      headers: {
-                        "Content-Type": "application/x-www-form-urlencoded",
-                        "Authorization": `Bearer ${token}`
-                      }
-                    });
+                    try {
+                      const salesResponse = await $.ajax({
+                        url: "https://api-open.olsera.co.id/api/open-api/v1/id/report/salesitemsbydate",
+                        type: "get",
+                        data: {
+                          per_page: '100',
+                          from: today,
+                          to: today,
+                          page: page
+                        },
+                        headers: {
+                          "Content-Type": "application/x-www-form-urlencoded",
+                          "Authorization": `Bearer ${token}`
+                        }
+                      });
 
-                    if (salesResponse.data.length > 0) {
-                      result_data = result_data.concat(salesResponse.data);
-                      page++;
-                    } else {
-                      break;
+                      if (salesResponse.data.length > 0) {
+                        result_data = result_data.concat(salesResponse.data);
+                        page++;
+                        await new Promise(resolve => setTimeout(resolve, 200)); // Jeda 1 detik antar page
+                      } else {
+                        break;
+                      }
+                    } catch (err) {
+                      if (err.status === 429) {
+                        let waitSeconds = 30; // default
+                        if (err.responseJSON && err.responseJSON.message) {
+                          const waitMatch = err.responseJSON.message.match(/Wait for (\d+)s/);
+                          if (waitMatch) {
+                            waitSeconds = parseInt(waitMatch[1]);
+                          }
+                        }
+                        $(".sync-api").html(`Terlalu banyak request. Menunggu ${waitSeconds} detik...`)
+                        await new Promise(resolve => setTimeout(resolve, waitSeconds * 200));
+                        // lanjutkan loop
+                      } else {
+                        throw err; // selain 429, lempar error agar bisa ditangani di luar
+                      }
                     }
+
                   }
 
-                  {{-- let result_data2 = encodeURIComponent(JSON.stringify(result_data)); --}}
-                  {{-- console.log(window.location.origin + '/sync-api?json-data=' + result_data2) --}}
-                  {{-- window.location.href = window.location.origin + '/sync-api?json-data=' + result_data2; --}}
 
                   $.each(result_data,(i,val)=>{
                     if (val.customer_name != null) {
                       result_data_send.push({
                         name : val.customer_name,
                         price : val.profit,
-                        order_time : val.forder_date.split(' ')[1]
+                        order_time : val.forder_date.split(' ')[1],
+                        order_date : val.order_date
                       })
                     }
                   })
 
                   const finalResponse = await $.ajax({
-                    url: window.location.origin+'/'+'sync-api',
-                    type: "get",
-                    data: {
+                    url: window.location.origin + '/sync-api',
+                    type: "POST",
+                    data: JSON.stringify({
                       result: result_data_send
+                    }),
+                    contentType: "application/json",
+                    processData: false,
+                    headers: {
+                      'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function(res) {
                       window.location.href = window.location.origin + '/sync-api-success';
                     }
                   });
 
+
                 } catch (error) {
                   console.error("error:", error);
+                  $(".sync-api").attr('disabled',false)
+                  $(".sync-api").html('Gagal, Silahkan Sinkronkan Ulang')
                 }
               });
 
