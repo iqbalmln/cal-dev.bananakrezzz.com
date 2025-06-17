@@ -35,7 +35,6 @@
                                             <li class="list-group-item">Rombongan : <b>{{ $rombongan->nama }}</b></li>
                                             <li class="list-group-item">Waktu Kedatangan :
                                                 {{ $rombongan->waktu_datang }}</li>
-                                            <li class="list-group-item">Waktu Pulang : {{ $rombongan->waktu_pulang }}
                                             </li>
                                             <li class="list-group-item">Total Transaksi :
                                                 {{ $rombongan->total_belanja }}</li>

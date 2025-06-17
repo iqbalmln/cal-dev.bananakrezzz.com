@@ -131,6 +131,7 @@
                 try {
                   const now = new Date();
                   const today = '2025-06-04';
+                  {{-- const today = '2025-06-15'; --}}
                   {{-- const today = new Date().toISOString().slice(0, 10); --}}
 
                   let token = "";

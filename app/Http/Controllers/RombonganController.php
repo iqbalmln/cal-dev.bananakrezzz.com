@@ -262,18 +262,29 @@ public function deleteAll()
                     Rombongan::where('nama', $value['name'])->update([
                         'total_belanja' => $total_added,
                     ]);
+                    Invoice::create([
+                        'user_id' => Auth::user()->id,
+                        'rombongan_id' => $data_old->id,
+                        'belanja' => $value['price'],
+                    ]);
                     break;
                 }
             }
 
             if (!$exists) {
-                Rombongan::create([
+                $rombongan = Rombongan::create([
                     'nama' => $value['name'],
                     'kode' => 1,
                     'total_belanja' => $value['price'],
                     'status' => 'transaksi',
                     'waktu_datang' => $value['order_time'],
                     'created_at' => $value['order_date']
+                ]);
+
+                Invoice::create([
+                    'user_id' => Auth::user()->id,
+                    'rombongan_id' => $rombongan->id,
+                    'belanja' => $value['price'],
                 ]);
             }
         }
