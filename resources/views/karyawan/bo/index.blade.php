@@ -127,12 +127,18 @@
             <script>
               $(".sync-api").click(async function () {
                 $(".sync-api").attr('disabled',true)
-                $(".sync-api").html('Loading...')
+                let dots = 0;
+                let loadingText = "Loading";
+                let interval = setInterval(function() {
+                    dots = (dots + 1) % 5;
+                    $(".sync-api").html(loadingText + ".".repeat(dots));
+                }, 500);
+
                 try {
                   const now = new Date();
-                  const today = '2025-06-04';
+                  {{-- const today = '2025-06-04'; --}}
                   {{-- const today = '2025-06-15'; --}}
-                  {{-- const today = new Date().toISOString().slice(0, 10); --}}
+                  const today = new Date().toISOString().slice(0, 10);
 
                   let token = "";
                   let page = 1;
