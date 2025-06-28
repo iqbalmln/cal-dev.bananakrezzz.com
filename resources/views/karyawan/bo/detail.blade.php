@@ -171,8 +171,10 @@
                                                 $('#total-amount2').val(grandTotal.toLocaleString('id-ID').replace('.','').replace('.',''));
                                                 $('[name=total_belanja2]').val(grandTotal.toLocaleString('id-ID'));
                                             }
-                                            console.log(123)
-                                            $('#total-fee').val(0.20*$('#total-amount2').val()).change()
+
+                                            let fee_total = 0.20*$('#total-amount2').val()
+                                            fee_total = Math.round(fee_total)
+                                            $('#total-fee').val(fee_total).change()
 
                                         },
                                         error: function(xhr, status, error) {

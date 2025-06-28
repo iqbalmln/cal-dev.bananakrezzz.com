@@ -29,13 +29,13 @@ class RombonganController extends Controller
     }
     public function getRombonganData()
     {
-        $rombongan = Rombongan::orderBy('created_at', 'desc')->get();
+        $rombongan = Rombongan::whereDate('created_at',date("Y-m-d"))->orderBy('created_at', 'desc')->get();
 
         return response()->json($rombongan);
     }
     public function getRombonganDatatransaksi()
     {
-        $rombongan = Rombongan::where('status', 'datang')->orwhere('status', 'transaksi')->orderBy('created_at', 'desc')->get();
+        $rombongan = Rombongan::where('status', 'datang')->orwhere('status', 'transaksi')->whereDate('created_at',date("Y-m-d"))->orderBy('created_at', 'desc')->get();
 
         return response()->json($rombongan);
     }

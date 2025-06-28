@@ -124,6 +124,8 @@
                 </tbody>
             </table>
             <meta name="csrf-token" content="{{ csrf_token() }}">
+            <input id="dt" type="date" class="d-none" value="{{ date("Y-m-d") }}" />
+            
             <script>
               $(".sync-api").click(async function () {
                 $(".sync-api").attr('disabled',true)
@@ -138,7 +140,8 @@
                   const now = new Date();
                   {{-- const today = '2025-06-04'; --}}
                   {{-- const today = '2025-06-15'; --}}
-                  const today = new Date().toISOString().slice(0, 10);
+                  {{-- const today = new Date().toISOString().slice(0, 10); --}}
+                  const today = $("#dt").val()
 
                   let token = "";
                   let page = 1;
