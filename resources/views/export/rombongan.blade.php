@@ -1,6 +1,7 @@
 <table>
 	<tr>
 		<th>TANGGAL</th>
+		<th>ROMBONGAN</th>
 		<th>CABANG</th>
 		<th>NAMA KENDARAAN</th>
 		<th>BIRO</th>
@@ -70,10 +71,8 @@
 	    preg_match_all('/\((.*?)\)/', $value->nama, $matches);
 	    $brackets = $matches[1];
 
-	    if (count($brackets) >= 2) {
-	        $result['poBus'] = trim($brackets[0]);
-	        $result['biro'] = trim(end($brackets));
-	    }
+	        $result['poBus'] = count($brackets) > 0 ? trim($brackets[0]) : '';
+	        $result['biro'] = count($brackets) > 2 ? trim($brackets[2]) : '';
 
 		$wellcome = 0;
         if ($result['B'] != 0) {
@@ -91,8 +90,9 @@
 	
 	<tr>
 		<td>{{ $value->created_at }}</td>
+		<td>{{ $value->nama }}</td>
 		<td>{{ $value->invoice->user->cabang->nama }}</td>
-		<td></td>
+		<td>{{ $result['poBus'] }}</td>
 		<td>{{ $result['biro'] }}</td>
 		<td>{{ $result['B'] }}</td>
 		<td>{{ $result['M'] }}</td>

@@ -1,5 +1,3 @@
-
-
 <?php
 
 namespace App\Console;
@@ -15,6 +13,11 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('delete:users')->dailyAt('00:00');
+        $schedule->command('olsera:sync')
+             ->everyFiveMinutes()
+             ->withoutOverlapping()
+             ->onOneServer()
+             ->runInBackground();
     }
     
 

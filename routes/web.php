@@ -34,6 +34,7 @@ Route::get('/update_status_transaksi', [RombonganController::class, 'update_stat
 Route::get('/export-excel', [RombonganController::class, 'export_excel'])->middleware('auth')->name('export_excel');
 Route::post('/sync-api', [RombonganController::class, 'sync_api'])->middleware('auth')->name('sync_api');
 Route::get('/sync-api-success', [RombonganController::class, 'sync_api_success'])->middleware('auth')->name('sync_api');
+Route::post('/update-nama-rombongan', [RombonganController::class, 'updateNamaDisplay'])->middleware('auth');
 
 //akun
 Route::get('/akun', [UserController::class, 'akun'])->middleware('auth'); 

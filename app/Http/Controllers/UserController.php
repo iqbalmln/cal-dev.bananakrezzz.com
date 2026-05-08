@@ -46,9 +46,9 @@ class UserController extends Controller
         $user = User::where('pin', $request->pin)->first();
 
         if ($user) {
-            if ($user->session_id && $user->session_id !== Session::getId()) {
-                return redirect()->back()->with('status', 'Akun ini sudah login di perangkat lain.');
-            }
+            // if ($user->session_id && $user->session_id !== Session::getId()) {
+            //     return redirect()->back()->with('status', 'Akun ini sudah login di perangkat lain.');
+            // }
 
             Auth::login($user);
             $user->session_id = Session::getId(); // Set session ID

@@ -30,7 +30,9 @@
                   <div class="numbers">
                     <p class="text-sm mb-0 text-uppercase font-weight-bold">Rombongan Datang</p>
                     <h5 class="font-weight-bolder">
-                      {{ $rombongan->where('status','datang')->count() }}
+                      {{ $rombongan->filter(function ($item) {
+                            return $item->status === 'datang' && $item->created_at->toDateString() === date('Y-m-d');
+                        })->count() }}
                     </h5>
                   </div>
                 </div>
@@ -51,7 +53,9 @@
                   <div class="numbers">
                     <p class="text-sm mb-0 text-uppercase font-weight-bold">Rombongan Dalam Proses Transaksi</p>
                     <h5 class="font-weight-bolder">
-                      {{ $rombongan->where('status','transaksi')->count() }}
+                        {{ $rombongan->filter(function ($item) {
+                            return $item->status === 'transaksi' && $item->created_at->toDateString() === date('Y-m-d');
+                        })->count() }}
                     </h5>
                    
                   </div>
@@ -73,7 +77,9 @@
                   <div class="numbers">
                     <p class="text-sm mb-0 text-uppercase font-weight-bold">Rombongan Selesai</p>
                     <h5 class="font-weight-bolder">
-                      {{ $rombongan->where('status','selesai')->count() }}
+                      {{ $rombongan->filter(function ($item) {
+                            return $item->status === 'selesai' && $item->created_at->toDateString() === date('Y-m-d');
+                        })->count() }}
                     </h5>
                     
                   </div>
@@ -90,12 +96,25 @@
        
       </div>
       
-      @if ($status != null)
+      <!-- @if ($status != null)
       <div class="alert alert-warning mt-5" role="alert">
-          <h4 class="alert-heading text-white">Update Databse!</h4>
+          <h4 class="alert-heading text-white">Update Database!</h4>
           <p class="text-white">Belum bisa melakukan transaksi hari ini, perlu tindakan update database dari Front Office</p>
       </div>
-  @endif
+  @endif -->
+        @php
+          $lastSync = \App\Models\Rombongan::max('last_sync');
+      @endphp
+
+      @if($lastSync)
+          <div class="alert alert-info mb-3">
+              🕓 <strong>Last Sync:</strong> {{ \Carbon\Carbon::parse($lastSync)->translatedFormat('d F Y, H:i') }}
+          </div>
+      @else
+          <div class="alert alert-warning mb-3">
+              ⚠️ Belum pernah melakukan sinkronisasi data.
+          </div>
+      @endif
       <div class="row mt-4">
         <div class="col-lg-12 mb-lg-0 mb-4">
           <div class="card ">
@@ -139,7 +158,7 @@
                 try {
                   const now = new Date();
                   {{-- const today = '2025-06-04'; --}}
-                  {{-- const today = '2025-06-15'; --}}
+                  {{-- const today = '2025-07-25'; --}}
                   {{-- const today = new Date().toISOString().slice(0, 10); --}}
                   const today = $("#dt").val()
 
@@ -206,9 +225,12 @@
 
                   $.each(result_data,(i,val)=>{
                     if (val.customer_name != null) {
+                      let comission_amount = val.comission_amount ? val.comission_amount.split('.')[0] : 0
+
                       result_data_send.push({
                         name : val.customer_name,
-                        price : val.profit,
+                        id_pos : val.sales_order_item_id,
+                        price : comission_amount,
                         order_time : val.forder_date.split(' ')[1],
                         order_date : val.order_date
                       })
@@ -236,6 +258,7 @@
                   console.error("error:", error);
                   $(".sync-api").attr('disabled',false)
                   $(".sync-api").html('Gagal, Silahkan Sinkronkan Ulang')
+                  clearInterval(interval);
                 }
               });
 
@@ -262,7 +285,7 @@
                                   tableContent += '</td>';
           
                                   // Rombongan (nama)
-                                  tableContent += '<td> <a href="/detail_transaksi?id=' + item.id +'">' + item.nama + '</a></td>';
+                                  tableContent += '<td> <a href="/detail_transaksi?id=' + item.id +'">' + (item.nama_display || item.nama) + '</a></td>';
           
                                   // Waktu (datang dan pulang)
                                   tableContent += '<td>';

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Cabang;
 use App\Models\Rombongan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

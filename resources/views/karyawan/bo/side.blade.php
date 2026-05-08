@@ -51,7 +51,7 @@
                                             } else if (item.status === 'selesai') {
                                                 tableContent += '<i class="bi bi-check2-circle text-danger"></i>';
                                             }
-                                            tableContent += '<td><div class="ms-4"> <a class="text-white" href="/detail_transaksi?id=' + item.id +'">' + item.nama + '</a></div>';
+                                            tableContent += '<td><div class="ms-4"> <a class="text-white" href="/detail_transaksi?id=' + item.id +'">' + (item.nama_display || item.nama) + '</a></div>';
                                             tableContent += '</div></td>';
                                             tableContent += '<td><div class="text-center">';
                                             tableContent += '<h6 class="text-sm mb-0 text-white">' + item.waktu_datang + '</h6>';

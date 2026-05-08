@@ -1,5 +1,6 @@
 @include('page.header')
 
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <body class="g-sidenav-show   bg-gray-100">
@@ -32,7 +33,15 @@
                                     <div class="numbers">
                                         <p class="text-sm mb-0 text-uppercase font-weight-bold">Detail Rombongan</p>
                                         <ul class="list-group">
-                                            <li class="list-group-item">Rombongan : <b>{{ $rombongan->nama }}</b></li>
+                                            <li class="list-group-item d-flex align-items-center gap-2">
+                                                Rombongan : <b id="nama-display-text">{{ $rombongan->nama_display ?? $rombongan->nama }}</b>
+                                                <button class="btn btn-sm btn-outline-secondary py-0 px-2" id="btn-edit-nama">Edit</button>
+                                                <form id="form-edit-nama" class="d-none d-flex gap-2 align-items-center" style="flex:1">
+                                                    <input type="text" class="form-control form-control-sm" id="input-nama-display" value="{{ $rombongan->nama_display ?? $rombongan->nama }}" style="max-width:250px">
+                                                    <button type="submit" class="btn btn-sm btn-primary">Simpan</button>
+                                                    <button type="button" class="btn btn-sm btn-secondary" id="btn-cancel-nama">Batal</button>
+                                                </form>
+                                            </li>
                                             <li class="list-group-item">Waktu Kedatangan :
                                                 {{ $rombongan->waktu_datang }}</li>
                                             </li>
@@ -195,6 +204,43 @@
 
                             $('#total-fee').change(function(){
                                 $("[name=total_fee]").val($(this).val().toLocaleString('id-ID'))
+                            });
+
+                            $('#btn-edit-nama').click(function() {
+                                $('#nama-display-text').addClass('d-none');
+                                $(this).addClass('d-none');
+                                $('#form-edit-nama').removeClass('d-none');
+                            });
+
+                            $('#btn-cancel-nama').click(function() {
+                                $('#form-edit-nama').addClass('d-none');
+                                $('#nama-display-text').removeClass('d-none');
+                                $('#btn-edit-nama').removeClass('d-none');
+                            });
+
+                            $('#form-edit-nama').submit(function(e) {
+                                e.preventDefault();
+                                var newNama = $('#input-nama-display').val().trim();
+                                if (!newNama) return;
+
+                                $.ajax({
+                                    url: '/update-nama-rombongan',
+                                    method: 'POST',
+                                    data: {
+                                        rombongan_id: {{ $rombongan->id }},
+                                        nama_display: newNama,
+                                        _token: $('meta[name="csrf-token"]').attr('content')
+                                    },
+                                    success: function(res) {
+                                        $('#nama-display-text').text(res.nama_display);
+                                        $('#form-edit-nama').addClass('d-none');
+                                        $('#nama-display-text').removeClass('d-none');
+                                        $('#btn-edit-nama').removeClass('d-none');
+                                    },
+                                    error: function() {
+                                        alert('Gagal memperbarui nama.');
+                                    }
+                                });
                             });
                         </script>
 
