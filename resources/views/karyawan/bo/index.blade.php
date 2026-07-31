@@ -102,17 +102,14 @@
           <p class="text-white">Belum bisa melakukan transaksi hari ini, perlu tindakan update database dari Front Office</p>
       </div>
   @endif -->
-        @php
-          $lastSync = \App\Models\Rombongan::max('last_sync');
-      @endphp
-
-      @if($lastSync)
-          <div class="alert alert-info mb-3">
-              🕓 <strong>Last Sync:</strong> {{ \Carbon\Carbon::parse($lastSync)->translatedFormat('d F Y, H:i') }}
+      @if($cabang && $cabang->last_sync)
+          <div class="alert alert-info mb-3" id="last-sync-box">
+              🕓 <strong>Last Sync:</strong>
+              <span id="last-sync-label">{{ $cabang->last_sync->translatedFormat('d F Y, H:i') }}</span>
           </div>
       @else
-          <div class="alert alert-warning mb-3">
-              ⚠️ Belum pernah melakukan sinkronisasi data.
+          <div class="alert alert-warning mb-3" id="last-sync-box">
+              ⚠️ <span id="last-sync-label">Belum pernah melakukan sinkronisasi data.</span>
           </div>
       @endif
       <div class="row mt-4">
@@ -146,120 +143,73 @@
             <input id="dt" type="date" class="d-none" value="{{ date("Y-m-d") }}" />
             
             <script>
+              // Sinkronisasi dijalankan sepenuhnya di server (queue). Halaman ini
+              // hanya menitipkan perintah lalu menunggu last_sync berubah.
               $(".sync-api").click(async function () {
-                $(".sync-api").attr('disabled',true)
+                const tombol = $(".sync-api");
+                const syncAwal = $("#last-sync-label").text();
+
+                tombol.attr('disabled', true);
+
                 let dots = 0;
-                let loadingText = "Loading";
-                let interval = setInterval(function() {
-                    dots = (dots + 1) % 5;
-                    $(".sync-api").html(loadingText + ".".repeat(dots));
+                const interval = setInterval(function () {
+                  dots = (dots + 1) % 5;
+                  tombol.html("Menyinkronkan" + ".".repeat(dots));
                 }, 500);
 
-                try {
-                  const now = new Date();
-                  {{-- const today = '2025-06-04'; --}}
-                  {{-- const today = '2025-07-25'; --}}
-                  {{-- const today = new Date().toISOString().slice(0, 10); --}}
-                  const today = $("#dt").val()
-
-                  let token = "";
-                  let page = 1;
-                  let result_data = [];
-                  let result_data_send = [];
-
-                  // Dapatkan token
-                  const tokenResponse = await $.ajax({
-                    url: "https://api-open.olsera.co.id/api/open-api/v1/id/token",
-                    type: "post",
-                    data: {
-                      app_id: 'pjm6n8KIbywEf4jLRuRX',
-                      secret_key: 'otAW7uDlLFt1cvAgyzgsON6ifh31xXJw',
-                      grant_type: 'secret_key'
-                    }
-                  });
-                  token = tokenResponse.access_token;
-
-                  while (true) {
-                    try {
-                      const salesResponse = await $.ajax({
-                        url: "https://api-open.olsera.co.id/api/open-api/v1/id/report/salesitemsbydate",
-                        type: "get",
-                        data: {
-                          per_page: '100',
-                          from: today,
-                          to: today,
-                          page: page
-                        },
-                        headers: {
-                          "Content-Type": "application/x-www-form-urlencoded",
-                          "Authorization": `Bearer ${token}`
-                        }
-                      });
-
-                      if (salesResponse.data.length > 0) {
-                        result_data = result_data.concat(salesResponse.data);
-                        page++;
-                        await new Promise(resolve => setTimeout(resolve, 200)); // Jeda 1 detik antar page
-                      } else {
-                        break;
-                      }
-                    } catch (err) {
-                      if (err.status === 429) {
-                        let waitSeconds = 30; // default
-                        if (err.responseJSON && err.responseJSON.message) {
-                          const waitMatch = err.responseJSON.message.match(/Wait for (\d+)s/);
-                          if (waitMatch) {
-                            waitSeconds = parseInt(waitMatch[1]);
-                          }
-                        }
-                        $(".sync-api").html(`Terlalu banyak request. Menunggu ${waitSeconds} detik...`)
-                        await new Promise(resolve => setTimeout(resolve, waitSeconds * 200));
-                        // lanjutkan loop
-                      } else {
-                        throw err; // selain 429, lempar error agar bisa ditangani di luar
-                      }
-                    }
-
+                const selesai = (pesan, gagal) => {
+                  clearInterval(interval);
+                  tombol.attr('disabled', false);
+                  tombol.html(pesan);
+                  if (!gagal) {
+                    setTimeout(() => tombol.html('Sinkronkan Data'), 3000);
                   }
+                };
 
-
-                  $.each(result_data,(i,val)=>{
-                    if (val.customer_name != null) {
-                      let comission_amount = val.comission_amount ? val.comission_amount.split('.')[0] : 0
-
-                      result_data_send.push({
-                        name : val.customer_name,
-                        id_pos : val.sales_order_item_id,
-                        price : comission_amount,
-                        order_time : val.forder_date.split(' ')[1],
-                        order_date : val.order_date
-                      })
-                    }
-                  })
-
-                  const finalResponse = await $.ajax({
-                    url: window.location.origin + '/sync-api',
+                try {
+                  await $.ajax({
+                    url: window.location.origin + '/sync-olsera',
                     type: "POST",
-                    data: JSON.stringify({
-                      result: result_data_send
-                    }),
-                    contentType: "application/json",
-                    processData: false,
+                    data: { tanggal: $("#dt").val() },
                     headers: {
                       'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(res) {
-                      window.location.href = window.location.origin + '/sync-api-success';
                     }
                   });
-
-
                 } catch (error) {
+                  const pesan = (error.responseJSON && error.responseJSON.message)
+                    ? error.responseJSON.message
+                    : 'Gagal, silakan sinkronkan ulang';
                   console.error("error:", error);
-                  $(".sync-api").attr('disabled',false)
-                  $(".sync-api").html('Gagal, Silahkan Sinkronkan Ulang')
-                  clearInterval(interval);
+                  selesai(pesan, true);
+                  return;
                 }
+
+                // Tunggu worker menyelesaikan job: cek last_sync tiap 5 detik,
+                // menyerah setelah 10 menit (job-nya tetap jalan di belakang).
+                const batas = Date.now() + 10 * 60 * 1000;
+
+                const cek = async () => {
+                  if (Date.now() > batas) {
+                    selesai('Masih diproses, muat ulang halaman nanti', true);
+                    return;
+                  }
+
+                  try {
+                    const status = await $.get(window.location.origin + '/sync-olsera/status');
+
+                    if (status.last_sync_label && status.last_sync_label !== syncAwal) {
+                      $("#last-sync-label").text(status.last_sync_label);
+                      selesai('Sinkronisasi selesai');
+                      return;
+                    }
+                  } catch (e) {
+                    console.error("gagal cek status:", e);
+                  }
+
+                  setTimeout(cek, 5000);
+                };
+
+                setTimeout(cek, 5000);
               });
 
 

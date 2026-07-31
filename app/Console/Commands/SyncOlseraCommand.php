@@ -2,41 +2,50 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\SyncOlseraJob;
+use App\Models\Cabang;
 use Illuminate\Console\Command;
-use App\Services\OlseraService;
-use App\Http\Controllers\RombonganController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class SyncOlseraCommand extends Command
 {
-    protected $signature = 'olsera:sync';
-    protected $description = 'Sinkronkan data dari Olsera ke database lokal';
+    protected $signature = 'olsera:sync
+                            {--cabang= : Sinkronkan satu cabang saja (ID cabang)}
+                            {--date= : Tanggal Y-m-d, default hari ini}
+                            {--langsung : Jalankan sekarang juga tanpa lewat queue}';
 
-    public function handle(OlseraService $olseraService)
+    protected $description = 'Sinkronkan data Olsera semua cabang ke database lokal';
+
+    public function handle(): int
     {
-        $this->info('Memulai sinkronisasi data Olsera...');
-        $date = now()->format('Y-m-d');
+        $tanggal = $this->option('date') ?: now()->format('Y-m-d');
 
-        try {
-            // 1️⃣ Ambil data dari API Olsera
-            $result = $olseraService->getSalesItemsByDate($date);
+        $query = Cabang::siapSync();
 
-            // 2️⃣ Panggil fungsi sync_api() agar logika penyimpanan tetap sama
-            $controller = new RombonganController();
-            $req = new Request(['result' => $result]);
-
-            $controller->sync_api($req);
-
-            DB::table('rombongans')->update(['last_sync' => Carbon::now()]);
-
-            $this->info('Sinkronisasi berhasil. Data disimpan ke database.');
-            Log::info("[CRON] Sinkronisasi Olsera sukses untuk {$date}, total: " . count($result));
-        } catch (\Throwable $e) {
-            Log::error("[CRON] Sinkronisasi gagal: " . $e->getMessage());
-            $this->error("Gagal: " . $e->getMessage());
+        if ($id = $this->option('cabang')) {
+            $query->where('id', $id);
         }
+
+        $cabangs = $query->get();
+
+        if ($cabangs->isEmpty()) {
+            $this->warn('Tidak ada cabang dengan kredensial Olsera yang aktif.');
+            Log::warning('[CRON] olsera:sync dilewati, tidak ada cabang siap sync.');
+            return self::SUCCESS;
+        }
+
+        foreach ($cabangs as $cabang) {
+            $job = new SyncOlseraJob($cabang, $tanggal);
+
+            if ($this->option('langsung')) {
+                dispatch_sync($job);
+                $this->info("✔ {$cabang->nama} selesai disinkronkan ({$tanggal}).");
+            } else {
+                dispatch($job);
+                $this->info("→ {$cabang->nama} dimasukkan ke antrian ({$tanggal}).");
+            }
+        }
+
+        return self::SUCCESS;
     }
 }

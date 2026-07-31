@@ -2,25 +2,41 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Schema;
+use App\Jobs\SyncOlseraJob;
 use App\Models\Invoice;
 use App\Models\Rombongan;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\DataExport;
 
 
 class RombonganController extends Controller
 {
+    /**
+     * Cabang milik user yang sedang login. Setiap user terkunci di satu cabang.
+     */
+    protected function cabangId(): ?int
+    {
+        return Auth::user()?->cabang_id;
+    }
+
+    /**
+     * Pastikan sebuah rombongan/invoice memang milik cabang user.
+     */
+    protected function milikCabang($model): bool
+    {
+        return $model && (int) $model->cabang_id === (int) $this->cabangId();
+    }
+
     // ==========================
     // FRONT OFFICE
     // ==========================
     public function fo()
     {
-        $rombongan = Rombongan::orderBy('created_at', 'desc')->get();
+        $rombongan = Rombongan::cabangUser()->orderBy('created_at', 'desc')->get();
         $status = $rombongan->first(function ($item) {
             return $item->created_at->toDateString() !== Carbon::today()->toDateString();
         });
@@ -30,7 +46,8 @@ class RombonganController extends Controller
 
     public function getRombonganData()
     {
-        $rombongan = Rombongan::whereDate('created_at', date("Y-m-d"))
+        $rombongan = Rombongan::cabangUser()
+            ->whereDate('created_at', date("Y-m-d"))
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -39,10 +56,8 @@ class RombonganController extends Controller
 
     public function getRombonganDatatransaksi()
     {
-        $rombongan = Rombongan::where(function ($q) {
-                $q->where('status', 'datang')
-                  ->orWhere('status', 'transaksi');
-            })
+        $rombongan = Rombongan::cabangUser()
+            ->whereIn('status', ['datang', 'transaksi'])
             ->whereDate('created_at', date("Y-m-d"))
             ->orderBy('created_at', 'desc')
             ->get();
@@ -52,12 +67,19 @@ class RombonganController extends Controller
 
     public function store(Request $request)
     {
+        $cabangId = $this->cabangId();
+
         $request->validate([
-            'kode' => 'required|unique:rombongans,kode',
+            // Kode cukup unik per cabang, bukan unik global.
+            'kode' => [
+                'required',
+                Rule::unique('rombongans', 'kode')->where(fn($q) => $q->where('cabang_id', $cabangId)),
+            ],
             'nama' => 'required|string|max:255',
         ]);
 
         Rombongan::create([
+            'cabang_id' => $cabangId,
             'kode' => $request->kode,
             'nama' => $request->nama,
             'status' => 'datang',
@@ -69,12 +91,13 @@ class RombonganController extends Controller
 
     public function deleteAll()
     {
-        Schema::disableForeignKeyConstraints();
-        Invoice::truncate();
-        Rombongan::truncate();
-        Schema::enableForeignKeyConstraints();
+        // Hanya hapus data cabang sendiri — jangan sentuh cabang lain.
+        $cabangId = $this->cabangId();
 
-        return redirect()->back()->with('success', 'Semua data berhasil dihapus.');
+        Invoice::where('cabang_id', $cabangId)->delete();
+        Rombongan::where('cabang_id', $cabangId)->delete();
+
+        return redirect()->back()->with('success', 'Semua data cabang ini berhasil dihapus.');
     }
 
     // ==========================
@@ -82,7 +105,7 @@ class RombonganController extends Controller
     // ==========================
     public function kasir()
     {
-        $rombongan = Rombongan::orderBy('created_at', 'desc')->get();
+        $rombongan = Rombongan::cabangUser()->orderBy('created_at', 'desc')->get();
         $status = $rombongan->first(function ($item) {
             return $item->created_at->toDateString() !== Carbon::today()->toDateString();
         });
@@ -95,16 +118,20 @@ class RombonganController extends Controller
         $id = $request->id;
         $rombongan = Rombongan::find($id);
 
-        if (!$rombongan) {
+        if (!$this->milikCabang($rombongan)) {
             return redirect()->back()->with('error', 'Rombongan tidak ditemukan.');
         }
 
-        $rombongans = Rombongan::whereIn('status', ['transaksi', 'datang'])
+        $rombongans = Rombongan::cabangUser()
+            ->whereIn('status', ['transaksi', 'datang'])
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $invoice = Invoice::where('rombongan_id', $id)
-            ->orWhere('user_id', Auth::user()->id)
+        $invoice = Invoice::cabangUser()
+            ->where(function ($q) use ($id) {
+                $q->where('rombongan_id', $id)
+                  ->orWhere('user_id', Auth::id());
+            })
             ->get();
 
         return view('karyawan.kasir.cal', compact('rombongan', 'rombongans', 'id', 'invoice'));
@@ -113,12 +140,13 @@ class RombonganController extends Controller
     public function getRombonganDetail(Request $request)
     {
         $rombongan = Rombongan::find($request->id);
-        if (!$rombongan) {
+
+        if (!$this->milikCabang($rombongan)) {
             return response()->json(['error' => 'Rombongan tidak ditemukan'], 404);
         }
 
         $invoice = Invoice::where('rombongan_id', $rombongan->id)
-            ->where('user_id', Auth::user()->id)
+            ->where('user_id', Auth::id())
             ->get();
 
         return response()->json([
@@ -129,7 +157,8 @@ class RombonganController extends Controller
 
     public function getRombongansData()
     {
-        $rombongans = Rombongan::whereIn('status', ['transaksi', 'datang'])
+        $rombongans = Rombongan::cabangUser()
+            ->whereIn('status', ['transaksi', 'datang'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -146,7 +175,7 @@ class RombonganController extends Controller
         try {
             $rombongan = Rombongan::find($request->rombongan_id);
 
-            if (!$rombongan) {
+            if (!$this->milikCabang($rombongan)) {
                 return response()->json(['message' => 'Rombongan tidak ditemukan'], 404);
             }
 
@@ -155,7 +184,8 @@ class RombonganController extends Controller
             }
 
             $invoice = new Invoice();
-            $invoice->user_id = Auth::user()->id;
+            $invoice->cabang_id = $this->cabangId();
+            $invoice->user_id = Auth::id();
             $invoice->rombongan_id = $rombongan->id;
             $invoice->belanja = $request->belanja;
             $invoice->save();
@@ -176,12 +206,14 @@ class RombonganController extends Controller
     // ==========================
     public function bo()
     {
-        $rombongan = Rombongan::orderBy('created_at', 'desc')->get();
+        $rombongan = Rombongan::cabangUser()->orderBy('created_at', 'desc')->get();
         $status = $rombongan->first(function ($item) {
             return $item->created_at->toDateString() !== Carbon::today()->toDateString();
         });
 
-        return view('karyawan.bo.index', compact('rombongan', 'status'));
+        $cabang = Auth::user()?->cabang;
+
+        return view('karyawan.bo.index', compact('rombongan', 'status', 'cabang'));
     }
 
     public function detail_transaksi(Request $request)
@@ -189,13 +221,11 @@ class RombonganController extends Controller
         $id = $request->id;
         $rombongan = Rombongan::find($id);
 
-        if (!$rombongan) {
+        if (!$this->milikCabang($rombongan)) {
             return redirect()->back()->with('error', 'Rombongan tidak ditemukan.');
         }
 
-        $invoices = Invoice::where('rombongan_id', $id)->get();
-
-        $total_add = $invoices->sum('belanja');
+        $total_add = Invoice::where('rombongan_id', $id)->sum('belanja');
         $rombongan->update(['total_belanja' => $total_add]);
 
         $invoices = Invoice::where('rombongan_id', $id)
@@ -217,14 +247,13 @@ class RombonganController extends Controller
 
     public function invoiceDetail(Request $request)
     {
-        $rombonganId = $request->rombongan_id;
-        $rombongan = Rombongan::find($rombonganId);
+        $rombongan = Rombongan::find($request->rombongan_id);
 
-        if (!$rombongan) {
+        if (!$this->milikCabang($rombongan)) {
             return response()->json(['error' => 'Rombongan tidak ditemukan'], 404);
         }
 
-        $invoices = Invoice::where('rombongan_id', $rombonganId)
+        $invoices = Invoice::where('rombongan_id', $rombongan->id)
             ->with('user')
             ->get()
             ->groupBy('user_id');
@@ -245,7 +274,7 @@ class RombonganController extends Controller
     {
         $rombongan = Rombongan::find($request->rombongan_id);
 
-        if (!$rombongan) {
+        if (!$this->milikCabang($rombongan)) {
             return redirect()->back()->with('error', 'Rombongan tidak ditemukan.');
         }
 
@@ -262,58 +291,67 @@ class RombonganController extends Controller
 
     public function export_excel()
     {
-        return Excel::download(new DataExport(), 'Data Export Rombongan ' . date('d-m-Y') . '.xlsx');
+        $cabang = Auth::user()?->cabang;
+        $namaCabang = $cabang?->nama ?: 'Semua';
+
+        return Excel::download(
+            new DataExport($this->cabangId()),
+            "Data Export Rombongan {$namaCabang} " . date('d-m-Y') . '.xlsx'
+        );
     }
 
     // ==========================
-    // SYNC API (BUTTON & CRON)
+    // SYNC OLSERA (TOMBOL MANUAL)
     // ==========================
-    public function sync_api(Request $request)
+
+    /**
+     * Tombol "Sinkronkan Data" hanya menitipkan pekerjaan ke antrian.
+     * Kredensial Olsera tidak pernah keluar dari server.
+     */
+    public function syncManual(Request $request)
     {
-        if (empty($request->result)) {
-            return response()->json(['status' => 'success']);
+        $request->validate([
+            'tanggal' => 'nullable|date_format:Y-m-d',
+        ]);
+
+        $cabang = Auth::user()?->cabang;
+
+        if (!$cabang) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Akun Anda belum terhubung ke cabang mana pun.',
+            ], 422);
         }
 
-        $userId = Auth::check() ? Auth::id() : 1; // fallback untuk cron
-
-        foreach ($request->result as $value) {
-            $check_invoice = Invoice::where('id_pos', $value['id_pos'])->first();
-
-            if ($check_invoice) continue;
-
-            $existing = Rombongan::where('nama', $value['name'])
-                ->whereDate('created_at', $value['order_date'])
-                ->first();
-
-            if ($existing) {
-                $existing->increment('total_belanja', $value['price']);
-
-                Invoice::create([
-                    'user_id' => $userId,
-                    'rombongan_id' => $existing->id,
-                    'belanja' => $value['price'],
-                    'id_pos' => $value['id_pos'],
-                ]);
-            } else {
-                $rombongan = Rombongan::create([
-                    'nama' => $value['name'],
-                    'kode' => 1,
-                    'total_belanja' => $value['price'],
-                    'status' => 'transaksi',
-                    'waktu_datang' => $value['order_time'],
-                    'created_at' => $value['order_date']
-                ]);
-
-                Invoice::create([
-                    'user_id' => $userId,
-                    'rombongan_id' => $rombongan->id,
-                    'belanja' => $value['price'],
-                    'id_pos' => $value['id_pos'] ?? null,
-                ]);
-            }
+        if (!$cabang->bolehSync()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Kredensial Olsera cabang ini belum diisi atau sync sedang dimatikan. Atur di menu Cabang.',
+            ], 422);
         }
 
-        return response()->json(['status' => 'success']);
+        $tanggal = $request->input('tanggal') ?: now()->format('Y-m-d');
+
+        SyncOlseraJob::dispatch($cabang, $tanggal, Auth::id());
+
+        return response()->json([
+            'status' => 'antri',
+            'message' => 'Sinkronisasi sedang diproses di latar belakang.',
+            'tanggal' => $tanggal,
+        ]);
+    }
+
+    /**
+     * Dipanggil berkala oleh halaman BO untuk tahu sync sudah selesai atau belum.
+     */
+    public function syncStatus()
+    {
+        $cabang = Auth::user()?->cabang;
+
+        return response()->json([
+            'last_sync' => $cabang?->last_sync?->toIso8601String(),
+            'last_sync_label' => $cabang?->last_sync?->translatedFormat('d F Y, H:i'),
+        ]);
     }
 
     public function updateNamaDisplay(Request $request)
@@ -325,18 +363,12 @@ class RombonganController extends Controller
 
         $rombongan = Rombongan::find($request->rombongan_id);
 
-        if (!$rombongan) {
+        if (!$this->milikCabang($rombongan)) {
             return response()->json(['message' => 'Rombongan tidak ditemukan'], 404);
         }
 
         $rombongan->update(['nama_display' => $request->nama_display]);
 
         return response()->json(['message' => 'Nama berhasil diperbarui', 'nama_display' => $rombongan->nama_display]);
-    }
-
-    public function sync_api_success()
-    {
-        DB::table('rombongans')->update(['last_sync' => now()]);
-        return redirect()->back()->with('success', 'Sinkronisasi Data Berhasil');
     }
 }

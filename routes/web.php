@@ -32,8 +32,8 @@ Route::get('/backoffice', [RombonganController::class, 'bo'])->middleware('auth'
 Route::get('/detail_transaksi', [RombonganController::class, 'detail_transaksi'])->middleware('auth');
 Route::get('/update_status_transaksi', [RombonganController::class, 'update_status_transaksi'])->middleware('auth');
 Route::get('/export-excel', [RombonganController::class, 'export_excel'])->middleware('auth')->name('export_excel');
-Route::post('/sync-api', [RombonganController::class, 'sync_api'])->middleware('auth')->name('sync_api');
-Route::get('/sync-api-success', [RombonganController::class, 'sync_api_success'])->middleware('auth')->name('sync_api');
+Route::post('/sync-olsera', [RombonganController::class, 'syncManual'])->middleware('auth')->name('sync.olsera');
+Route::get('/sync-olsera/status', [RombonganController::class, 'syncStatus'])->middleware('auth')->name('sync.olsera.status');
 Route::post('/update-nama-rombongan', [RombonganController::class, 'updateNamaDisplay'])->middleware('auth');
 
 //akun
@@ -43,6 +43,7 @@ Route::post('/add.user', [UserController::class, 'store']);
 Route::get('/del.user', [UserController::class, 'destroy']);
 Route::get('/cabang', [CabangController::class, 'cabang'])->middleware('auth'); 
 Route::post('/add.cabang', [CabangController::class, 'store']);
+Route::post('/edit.cabang', [CabangController::class, 'update'])->middleware('auth');
 Route::get('/del.cabang', [CabangController::class, 'destroy']);
 
 

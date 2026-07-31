@@ -40,7 +40,10 @@
                                     <tr>
                                         <th scope="col">No</th>
                                         <th scope="col">Nama</th>
-                                        <th scope="col">Hapus</th>
+                                        <th scope="col">Olsera App ID</th>
+                                        <th scope="col">Sync</th>
+                                        <th scope="col">Last Sync</th>
+                                        <th scope="col">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -48,9 +51,27 @@
                                         <tr>
                                             <th scope="row">{{ $key+1 }}</th>
                                             <th scope="row">{{ $user->nama }}</th>
+                                            <td class="text-sm">
+                                                {{ $user->olsera_app_id ?: '—' }}
+                                            </td>
                                             <td>
-
-                                                <a href="/del.cabang?id={{ $user->id }}" class="btn btn-danger"><i
+                                                @if (!$user->olsera_app_id || !$user->olsera_secret_key)
+                                                    <span class="badge bg-gradient-secondary">Belum diatur</span>
+                                                @elseif ($user->sync_aktif)
+                                                    <span class="badge bg-gradient-success">Aktif</span>
+                                                @else
+                                                    <span class="badge bg-gradient-warning">Nonaktif</span>
+                                                @endif
+                                            </td>
+                                            <td class="text-sm">
+                                                {{ $user->last_sync ? $user->last_sync->translatedFormat('d M Y, H:i') : '—' }}
+                                            </td>
+                                            <td>
+                                                <button type="button" class="btn btn-info mb-0" data-toggle="modal"
+                                                    data-target="#editCabang{{ $user->id }}">
+                                                    <i class="bi bi-pencil-fill"></i>
+                                                </button>
+                                                <a href="/del.cabang?id={{ $user->id }}" class="btn btn-danger mb-0"><i
                                                         class="bi bi-trash3-fill"></i></a>
                                             </td>
                                         </tr>
@@ -87,6 +108,22 @@
                                 <small class="text-danger">{{ $message }}</small>
                             @enderror
                         </div>
+                        <div class="form-group">
+                            <label for="olsera_app_id">Olsera App ID</label>
+                            <input type="text" class="form-control" name="olsera_app_id"
+                                value="{{ old('olsera_app_id') }}" autocomplete="off">
+                        </div>
+                        <div class="form-group">
+                            <label for="olsera_secret_key">Olsera Secret Key</label>
+                            <input type="password" class="form-control" name="olsera_secret_key"
+                                autocomplete="new-password">
+                            <small class="text-muted">Disimpan terenkripsi dan tidak pernah ditampilkan lagi.</small>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="sync_aktif" value="1" checked
+                                id="sync_aktif_baru">
+                            <label class="form-check-label" for="sync_aktif_baru">Aktifkan sinkronisasi otomatis</label>
+                        </div>
                     </div>
 
                     <div class="modal-footer">
@@ -98,6 +135,51 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Edit per cabang -->
+    @foreach ($cabang as $item)
+        <div class="modal fade" id="editCabang{{ $item->id }}" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit Cabang — {{ $item->nama }}</h5>
+                    </div>
+                    <form action="/edit.cabang" method="POST">
+                        @csrf
+                        <input type="hidden" name="id" value="{{ $item->id }}">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Nama</label>
+                                <input type="text" class="form-control" name="nama" value="{{ $item->nama }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Olsera App ID</label>
+                                <input type="text" class="form-control" name="olsera_app_id"
+                                    value="{{ $item->olsera_app_id }}" autocomplete="off">
+                            </div>
+                            <div class="form-group">
+                                <label>Olsera Secret Key</label>
+                                <input type="password" class="form-control" name="olsera_secret_key"
+                                    placeholder="{{ $item->olsera_secret_key ? 'Kosongkan bila tidak diubah' : 'Belum diisi' }}"
+                                    autocomplete="new-password">
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="sync_aktif" value="1"
+                                    id="sync_aktif_{{ $item->id }}" {{ $item->sync_aktif ? 'checked' : '' }}>
+                                <label class="form-check-label" for="sync_aktif_{{ $item->id }}">Aktifkan sinkronisasi
+                                    otomatis</label>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                            <button type="submit" class="btn btn-primary">Simpan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endforeach
 
 
     @include('page.footer')
