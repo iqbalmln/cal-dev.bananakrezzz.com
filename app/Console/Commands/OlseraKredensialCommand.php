@@ -38,8 +38,9 @@ class OlseraKredensialCommand extends Command
             $cabang = Cabang::firstOrNew(['nama' => $item['nama']]);
 
             $status = match (true) {
-                !$cabang->exists => 'dibuat',
-                $cabang->olsera_app_id !== $item['app_id'] => 'kredensial diganti',
+                !$cabang->exists => '⚠️ cabang BARU dibuat',
+                blank($cabang->olsera_app_id) => 'kredensial diisi',
+                $cabang->olsera_app_id !== $item['app_id'] => 'app_id diganti',
                 $cabang->olsera_secret_key !== $item['secret_key'] => 'secret key diganti',
                 default => 'sudah sesuai',
             };
