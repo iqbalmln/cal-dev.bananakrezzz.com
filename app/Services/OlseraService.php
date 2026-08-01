@@ -89,6 +89,7 @@ class OlseraService
         $page = 1;
         $data = [];
         $maxRetries = 5;
+        $tokenSudahDisegarkan = false;
 
         while (true) {
             $retryCount = 0;
@@ -122,13 +123,34 @@ class OlseraService
 
                 } catch (ClientException $e) {
                     $response = $e->getResponse();
+                    $status = $response?->getStatusCode();
 
-                    if ($response && $response->getStatusCode() === 429) {
+                    if ($status === 429) {
                         $retryAfter = $response->getHeader('Retry-After')[0] ?? pow(2, $retryCount + 1);
                         Log::warning("⚠️ [{$cabang->nama}] Rate limit halaman {$page}. Retry setelah {$retryAfter}s (percobaan ke-{$retryCount})");
                         sleep($retryAfter);
                         $retryCount++;
                         continue;
+                    }
+
+                    // Olsera menjawab 404 "Data tidak ditemukan" kalau tanggal itu
+                    // memang belum ada transaksi. Itu kondisi normal, bukan kegagalan.
+                    if ($status === 404) {
+                        Log::info("ℹ️ [{$cabang->nama}] Belum ada transaksi pada {$date}.");
+                        break 2;
+                    }
+
+                    // Token bisa ditolak sebelum masa cache 55 menit habis. Segarkan
+                    // sekali lalu ulangi, supaya sync tidak mati sampai cache kedaluwarsa.
+                    if ($status === 401 && !$tokenSudahDisegarkan) {
+                        $tokenSudahDisegarkan = true;
+                        $this->lupakanToken();
+                        $token = $this->getToken();
+
+                        if ($token) {
+                            Log::warning("⚠️ [{$cabang->nama}] Token ditolak (401), token disegarkan lalu dicoba ulang.");
+                            continue;
+                        }
                     }
 
                     Log::error("❌ [{$cabang->nama}] Error halaman {$page}: " . $e->getMessage());
@@ -145,7 +167,7 @@ class OlseraService
             }
         }
 
-        return collect($data)
+        $hasil = collect($data)
             ->filter(fn($item) => !empty($item['customer_name']))
             ->map(fn($val) => [
                 'name' => $val['customer_name'],
@@ -156,6 +178,15 @@ class OlseraService
             ])
             ->values()
             ->toArray();
+
+        // Baris tanpa customer_name memang sengaja dibuang, tapi tanpa catatan ini
+        // log jadi membingungkan: "0 diterima" padahal halaman tadi berisi data.
+        if (count($data) !== count($hasil)) {
+            Log::info("ℹ️ [{$cabang->nama}] " . count($data) . ' baris dari Olsera, '
+                . count($hasil) . ' punya customer_name (sisanya dilewati).');
+        }
+
+        return $hasil;
     }
 
     protected function cabang(): Cabang

@@ -15,6 +15,10 @@
   <!-- Nucleo Icons -->
   <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-icons.css" rel="stylesheet" />
   <link href="https://demos.creative-tim.com/argon-dashboard-pro/assets/css/nucleo-svg.css" rel="stylesheet" />
+  <!-- jQuery versi lengkap (bukan slim, karena $.ajax dipakai di beberapa halaman).
+       Wajib dimuat di <head>: script inline di dalam body berjalan lebih dulu
+       daripada footer, dan Bootstrap 4 di footer juga membutuhkannya. -->
+  <script src="{{ asset('src/assets/js/core/jquery.min.js') }}"></script>
   <!-- Font Awesome Icons -->
   <script src="https://kit.fontawesome.com/42d5adcbca.js" crossorigin="anonymous"></script>
   <!-- CSS Files -->

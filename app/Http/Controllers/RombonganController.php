@@ -8,6 +8,7 @@ use App\Models\Rombongan;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\DataExport;
@@ -351,6 +352,9 @@ class RombonganController extends Controller
         return response()->json([
             'last_sync' => $cabang?->last_sync?->toIso8601String(),
             'last_sync_label' => $cabang?->last_sync?->translatedFormat('d F Y, H:i'),
+            // Dipakai halaman BO untuk membedakan "masih mengantre" dari
+            // "sedang menarik data", supaya pengguna tahu proses tidak macet.
+            'antrian' => DB::table('jobs')->count(),
         ]);
     }
 

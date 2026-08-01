@@ -106,10 +106,12 @@
           <div class="alert alert-info mb-3" id="last-sync-box">
               🕓 <strong>Last Sync:</strong>
               <span id="last-sync-label">{{ $cabang->last_sync->translatedFormat('d F Y, H:i') }}</span>
+              <div id="sync-status" class="mt-2" style="display:none;"></div>
           </div>
       @else
           <div class="alert alert-warning mb-3" id="last-sync-box">
               ⚠️ <span id="last-sync-label">Belum pernah melakukan sinkronisasi data.</span>
+              <div id="sync-status" class="mt-2" style="display:none;"></div>
           </div>
       @endif
       <div class="row mt-4">
@@ -147,21 +149,25 @@
               // hanya menitipkan perintah lalu menunggu last_sync berubah.
               $(".sync-api").click(async function () {
                 const tombol = $(".sync-api");
+                const kotak = $("#sync-status");
                 const syncAwal = $("#last-sync-label").text();
+                const mulai = Date.now();
 
-                tombol.attr('disabled', true);
+                const kabar = (isi, warna) => {
+                  kotak.show().html('<span class="text-' + (warna || 'dark') + '">' + isi + '</span>');
+                };
 
-                let dots = 0;
-                const interval = setInterval(function () {
-                  dots = (dots + 1) % 5;
-                  tombol.html("Menyinkronkan" + ".".repeat(dots));
-                }, 500);
+                const detik = () => Math.round((Date.now() - mulai) / 1000);
 
-                const selesai = (pesan, gagal) => {
-                  clearInterval(interval);
-                  tombol.attr('disabled', false);
-                  tombol.html(pesan);
-                  if (!gagal) {
+                tombol.attr('disabled', true)
+                      .html('<span class="spinner-border spinner-border-sm mr-2"></span>Menyinkronkan…');
+                kabar('⏳ Mengirim perintah ke server…');
+
+                const selesai = (pesanTombol, isiKabar, warna) => {
+                  tombol.attr('disabled', false).html('Sinkronkan Data');
+                  kabar(isiKabar, warna);
+                  if (pesanTombol) {
+                    tombol.html(pesanTombol);
                     setTimeout(() => tombol.html('Sinkronkan Data'), 3000);
                   }
                 };
@@ -178,19 +184,19 @@
                 } catch (error) {
                   const pesan = (error.responseJSON && error.responseJSON.message)
                     ? error.responseJSON.message
-                    : 'Gagal, silakan sinkronkan ulang';
+                    : 'Gagal menghubungi server, silakan coba lagi.';
                   console.error("error:", error);
-                  selesai(pesan, true);
+                  selesai(null, '❌ ' + pesan, 'danger');
                   return;
                 }
 
-                // Tunggu worker menyelesaikan job: cek last_sync tiap 5 detik,
-                // menyerah setelah 10 menit (job-nya tetap jalan di belakang).
+                // Sync dikerjakan worker di latar belakang. Halaman menunggu
+                // last_sync berubah, sambil melaporkan posisinya ke pengguna.
                 const batas = Date.now() + 10 * 60 * 1000;
 
                 const cek = async () => {
                   if (Date.now() > batas) {
-                    selesai('Masih diproses, muat ulang halaman nanti', true);
+                    selesai(null, '⚠️ Masih diproses di latar belakang. Muat ulang halaman beberapa saat lagi.', 'warning');
                     return;
                   }
 
@@ -199,17 +205,24 @@
 
                     if (status.last_sync_label && status.last_sync_label !== syncAwal) {
                       $("#last-sync-label").text(status.last_sync_label);
-                      selesai('Sinkronisasi selesai');
+                      selesai('Selesai ✓', '✅ Sinkronisasi selesai dalam ' + detik() + ' detik.', 'success');
                       return;
+                    }
+
+                    if (status.antrian > 0) {
+                      kabar('⏳ Menunggu giliran di antrian (' + status.antrian + ' pekerjaan) — ' + detik() + ' detik.');
+                    } else {
+                      kabar('⏳ Sedang menarik data dari Olsera — ' + detik() + ' detik.');
                     }
                   } catch (e) {
                     console.error("gagal cek status:", e);
+                    kabar('⏳ Menunggu… (' + detik() + ' detik)');
                   }
 
-                  setTimeout(cek, 5000);
+                  setTimeout(cek, 3000);
                 };
 
-                setTimeout(cek, 5000);
+                setTimeout(cek, 2000);
               });
 
 

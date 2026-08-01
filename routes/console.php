@@ -18,9 +18,12 @@ Schedule::command('delete:users')->dailyAt('00:00');
 
 // Jalankan command olsera:sync setiap 5 menit.
 // Command ini hanya memasukkan job ke antrian, jadi selesainya cepat.
+// Angka pada withoutOverlapping() = umur kunci dalam menit. Wajib diisi:
+// tanpa itu kuncinya bertahan 24 jam, sehingga kalau prosesnya mati mendadak
+// (server reboot / ter-kill) jadwalnya tidak akan menyala lagi seharian.
 Schedule::command('olsera:sync')
     ->everyFiveMinutes()
-    ->withoutOverlapping()
+    ->withoutOverlapping(10)
     ->onOneServer()
     ->runInBackground();
 
@@ -28,6 +31,6 @@ Schedule::command('olsera:sync')
 // lalu mati sendiri. Tidak perlu supervisor/systemd di server.
 Schedule::command('queue:work --stop-when-empty --max-time=280 --tries=3')
     ->everyMinute()
-    ->withoutOverlapping()
+    ->withoutOverlapping(10)
     ->onOneServer()
     ->runInBackground();
